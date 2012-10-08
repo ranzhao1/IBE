@@ -9,10 +9,10 @@ Compile Code
 After you install both PBC library and GMP library, you could compile the code by following
 instruction: 
 
-gcc bf_4_1.c sha1.c  -o test -I /usr/local/include/ -L /usr/local/lib/ -Wl,-rpath 
+gcc bf_4_1.cc sha1.cc  -o test -I /usr/local/include/ -L /usr/local/lib/ -Wl,-rpath 
 /usr/local/lib -l pbc -l gmp 
 
-gcc bf_4_2.c sha1.c  -o test1 -I /usr/local/include/ -L /usr/local/lib/ -Wl,-rpath 
+gcc bf_4_2.cc sha1.cc  -o test1 -I /usr/local/include/ -L /usr/local/lib/ -Wl,-rpath 
 /usr/local/lib -l pbc -l gmp 
 
 Sample Review
@@ -23,6 +23,11 @@ known,while the master-key will be known only to the PKG.
 (2)Extract:The receiver extracts the corresponding private key from the PKG.
 (3)Encrypt:The sender will generate a ciphertext based on the receiver ID.
 (4)Decrypt:The receiver will use his private key to get the message digest.
+
+Test the code:
+I use gtest to test the code. I have write a Makefile for testing code. Before run
+the test, please comment the main function in the corresponding target file in 
+order to make the test work.
 
 -------------------------------------------------------------------------------------
 Ran Zhao <ran.zhao@yale.edu>
