@@ -1,4 +1,4 @@
-/*
+/**
  Boneh-Franklin Identity-Based Encryption from the Weil Pairing
  Author: Ran Zhao
  Created on: Oct 4th, 2012
@@ -21,87 +21,32 @@
  4.In my code, I use type A parameter to generate pairing.
  */
 
-//#include <pbc.h>
-//#include <pbc_test.h>
-//#include <gmp.h>
-//#include <stdio.h>
-//#include <string.h>
-//#include "sha1.h"
-//#include <stdlib.h>
+
 
 #include"bf_4_1.h"
+
 
 #define SIZE 100
 #define RBITS 160
 #define QBITS 512
 
-void sha_fun(char target_string[], char* sha_result) {
-    
-	SHA1Context sha;
-	int i;
-	unsigned int g;
-	SHA1Reset(&sha);
-	SHA1Input(&sha, (const unsigned char *) target_string,
-              strlen(target_string));
-    
-	if (!SHA1Result(&sha)) {
-		fprintf(stderr, "ERROR-- could not compute message digest\n");
-	} else {
-		printf("\t");
-		for (i = 0; i < 5; i++) {
-			g = sha.Message_Digest[i];
-            
-		}
-        
-		sprintf(sha_result,
-				"%08X%08X%08X%08X%08X", sha.Message_Digest[0], sha.Message_Digest[1], sha.Message_Digest[2], sha.Message_Digest[3], sha.Message_Digest[4]);
-        
-	}
-    
-}
 
-//Hex string to in
-int htoi(char a) {
-	int i;
-	if (a >= 'A' && a <= 'F') {
-		i = a - 'A' + 10;
-	} else {
-		i = a - '0';
-	}
 
-	return i;
+void get_private_key(char* ID, pairing_t pairing, element_t s, element_t Sid)
+{
+    element_t PublicKey, PrivateKey;
+    element_init_G1(PublicKey, pairing);
+    element_init_G1(PrivateKey, pairing);
     
-}
-
-void xor_operation(char a, char b, char* xor_result) {
-    
-	int i;
-	int j;
-	int z;
-	char result[10];
-    
-	i = htoi(a);
-	j = htoi(b);
-	z = i ^ j;
-	sprintf(result, "%X", z);
-	strcat(xor_result, result);
-    
-}
-
-void GetPrivateKey(char* ID, pairing_t pairing, element_t s, element_t Sid) {
-    
-	element_t PublicKey, PrivateKey;
-	element_init_G1(PublicKey, pairing);
-	element_init_G1(PrivateKey, pairing);
-    
-	element_from_hash(PublicKey, ID, strlen(ID));   //Compute user public key
-	element_mul_zn(PrivateKey, PublicKey, s);   //Compute user private key
+    element_from_hash(PublicKey, ID, strlen(ID));   //Compute user public key
+    element_mul_zn(PrivateKey, PublicKey, s);   //Compute user private key
 	element_printf("Private key Sid = %B\n", PrivateKey);
 	Sid = PrivateKey;
     
 }
 
-void GetPublicKey(char* ID, pairing_t pairing, element_t Qid) {
+void get_public_key(char* ID, pairing_t pairing, element_t Qid)
+{
     
 	element_t PublicKey, PrivateKey;
 	element_init_G1(PublicKey, pairing);
@@ -113,8 +58,9 @@ void GetPublicKey(char* ID, pairing_t pairing, element_t Qid) {
     
 }
 
-void Encryption(char* shamessage, char* ID, element_t P, element_t Ppub,
-                element_t U, char* V, pairing_t pairing) {
+void encryption(char* shamessage, char* ID, element_t P, element_t P_pub,
+                element_t U, char* V, pairing_t pairing)
+{
 	int i;
 	char sgid[SIZE];   //Sender gid string representation
 	char shagid[SIZE]; //Sender H2 function result
@@ -128,8 +74,8 @@ void Encryption(char* shamessage, char* ID, element_t P, element_t Ppub,
 	element_random(r);
 	element_mul_zn(U, P, r);
 	element_printf("U = %B", U);
-	GetPublicKey(ID, pairing, Qid);
-	element_pairing(gid, Qid, Ppub);
+	get_public_key(ID, pairing, Qid);
+	element_pairing(gid, Qid, P_pub);
 	element_pow_zn(gid, gid, r);
 	element_snprint(sgid, SIZE, gid);
 	sha_fun(sgid, shagid);
@@ -143,8 +89,9 @@ void Encryption(char* shamessage, char* ID, element_t P, element_t Ppub,
     
 }
 
-void Decryption(element_t Sid, pairing_t pairing, element_t U, char* V,
-                char* xor_result_receiver) {
+void decryption(element_t Sid, pairing_t pairing, element_t U, char* V,
+                char* xor_result_receiver)
+{
     
 	int i;
 	element_t rgid;
@@ -162,8 +109,9 @@ void Decryption(element_t Sid, pairing_t pairing, element_t U, char* V,
     
 }
 
-void SetupSys(int rbits,int qbits,element_t P,element_t Ppub,pairing_t pairing,element_t s ) {
-
+void setup_sys(int rbits,int qbits,element_t P,element_t Ppub,pairing_t pairing,element_t s )
+{
+    
 	pbc_param_t par;   //Parameter to generate the pairing
 	pbc_param_init_a_gen(par, rbits, qbits); //Initial the parameter for the pairing
 	pairing_init_pbc_param(pairing, par);   //Initial the pairing
@@ -182,26 +130,27 @@ void SetupSys(int rbits,int qbits,element_t P,element_t Ppub,pairing_t pairing,e
     
 }
 
-int main() {
+int main()
+{
     
 	char qbits[5];
 	char rbits[5];
 	char ID[SIZE];   //User ID
 	char message[SIZE];   //User message
 	char shamessage[SIZE]; //The input message digest(sha1 result)
-
+    
 	char xor_result[SIZE]; //Sender XOR result---V
 	char xor_result_receiver[SIZE];  //Receiver XOR result
 	memset(xor_result, 0, sizeof(char)*SIZE);
 	memset(xor_result_receiver, 0, sizeof(char)*SIZE);
-
+    
     
 	pairing_t pairing;   //The pair of bilinear map
     
 	element_t P, Ppub, s, U, Qid, Sid;
 	mpz_t messagehash;
 	mpz_init(messagehash);
-
+    
 	printf("\n############SETUP############\n");
     printf("Please enter rbits:");
 	scanf("%[0-9]", rbits);
@@ -209,13 +158,13 @@ int main() {
 	printf("\nPlease enter qbits:");
 	scanf("%[0-9]", qbits);
     getchar();
-
-	SetupSys(atoi(rbits), atoi(qbits), P, Ppub, pairing, s);
+    
+	setup_sys(atoi(rbits), atoi(qbits), P, Ppub, pairing, s);
 	printf("System parameters have been set!\n");
 	element_printf("P = %B\n", P);
 	element_printf("Ppub = %B\n", Ppub);
     
-   
+    
     printf("###########EXTRACT###########\n");
     element_init_G1(Qid, pairing);
 	element_init_G1(Sid, pairing);
@@ -223,8 +172,8 @@ int main() {
 	scanf("%[ a-zA-Z0-9+*-!.,&*@{}$#]", ID);
 	printf("\nID=%s\n", ID);
     getchar();
-    GetPrivateKey(ID, pairing, s, Sid);
-	GetPublicKey(ID, pairing, Qid);
+    get_private_key(ID, pairing, s, Sid);
+	get_public_key(ID, pairing, Qid);
 	printf("##########ENCRPTION##########\n");
     printf("\nPlase enter the message to encrypt:");
 	scanf("%[ a-zA-Z0-9+*-!.,&*@{}$#]", message);
@@ -233,13 +182,13 @@ int main() {
     
     sha_fun(message, shamessage);   //Get the message digest
 	printf("\nThe message hash=%s\n", shamessage);
-
+    
     element_init_G1(U, pairing);
-	Encryption(shamessage, ID, P, Ppub, U, xor_result, pairing);
+	encryption(shamessage, ID, P, Ppub, U, xor_result, pairing);
 	printf("Send <U,V> to the receiver!\n");
     
 	printf("##########DECRYPTION##########");
-	Decryption(Sid, pairing, U, xor_result, xor_result_receiver);
+	decryption(Sid, pairing, U, xor_result, xor_result_receiver);
 	printf("\nThe recovery message digest is %s\n", xor_result_receiver);
 	printf("The original message digest is %s\n", shamessage);
     
